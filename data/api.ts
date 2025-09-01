@@ -1,6 +1,6 @@
 import { AppData, Client, Invoice, LorryReceipt, Expense, Payment } from '../types';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://upldata.onrender.com';
 
 const apiFetch = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
     try {
