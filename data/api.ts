@@ -83,3 +83,8 @@ export const savePayment = async (paymentData: Omit<Payment, 'id'>): Promise<Pay
         body: JSON.stringify(paymentData),
     });
 };
+
+export const getGstDetails = async (gstin: string): Promise<GstDetails> => {
+    // The apiFetch function already includes an alert on error, so we don't need extra try-catch here.
+    return apiFetch<GstDetails>(`/gst/${gstin}`);
+};

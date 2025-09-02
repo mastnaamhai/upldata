@@ -146,6 +146,12 @@ export interface Client {
   address: string;
 }
 
+export interface GstDetails {
+    legalName: string;
+    tradeName: string;
+    address: string;
+}
+
 export type ExpenseCategory = 'Fuel' | 'Salary' | 'Office Rent' | 'Maintenance' | 'Toll' | 'Other';
 export interface Expense {
   id:string;

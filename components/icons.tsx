@@ -118,3 +118,12 @@ export const InfoIcon: React.FC<{ className?: string; title?: string }> = ({ cla
         <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
     </svg>
 );
+
+export const RefreshCw: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 2v6h6"/>
+    <path d="M21 12A9 9 0 0 0 6 5.3L3 8"/>
+    <path d="M21 22v-6h-6"/>
+    <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/>
+  </svg>
+);

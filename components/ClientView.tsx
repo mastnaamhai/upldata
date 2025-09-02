@@ -1,8 +1,9 @@
 import React, { useState, FormEvent, useMemo, useEffect } from 'react';
 import type { Client, AppSettings } from '../types';
-import { SearchIcon } from './icons';
+import { SearchIcon, RefreshCw } from './icons';
 import { FormRow, FormField, TextInput, TextAreaInput } from './FormComponents';
 import ClientListPDF from './ClientListPDF';
+import { getGstDetails } from '../data/api';
 
 const emptyClient: Omit<Client, 'id'> = {
     name: '',
@@ -35,16 +36,43 @@ const ClientForm: React.FC<{
 }> = ({ onSave, onCancel, clientToEdit }) => {
 
     const [formData, setFormData] = useState<Omit<Client, 'id'> | Client>(clientToEdit || emptyClient);
+    const [isFetchingGst, setIsFetchingGst] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
     };
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         onSave(formData as Client);
     };
+
+    const handleFetchGstDetails = async () => {
+        if (!formData.gstin || formData.gstin.length !== 15) {
+            alert('Please enter a valid 15-character GSTIN.');
+            return;
+        }
+        setIsFetchingGst(true);
+        try {
+            const details = await getGstDetails(formData.gstin);
+            if (details) {
+                setFormData(prev => ({
+                    ...prev,
+                    name: details.tradeName || details.legalName,
+                    address: details.address,
+                }));
+                alert('GST details fetched and fields populated!');
+            }
+        } catch (error) {
+            // The apiFetch function already shows a generic alert.
+            // We could add more specific UI feedback here if needed.
+            console.error("Failed to fetch GST details", error);
+        } finally {
+            setIsFetchingGst(false);
+        }
+    };
+
 
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg animate-fade-in mb-4">
@@ -55,7 +83,12 @@ const ClientForm: React.FC<{
                         <TextInput name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Acme Corp" required />
                     </FormField>
                     <FormField label="GSTIN">
-                        <TextInput name="gstin" value={formData.gstin} onChange={handleChange} placeholder="e.g. 29ABCDE1234F1Z5" required />
+                        <div className="flex items-center space-x-2">
+                            <TextInput name="gstin" value={formData.gstin} onChange={handleChange} placeholder="e.g. 29ABCDE1234F1Z5" required maxLength={15} />
+                            <button type="button" onClick={handleFetchGstDetails} disabled={isFetchingGst} className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300">
+                                {isFetchingGst ? <RefreshCw className="animate-spin" /> : 'Fetch'}
+                            </button>
+                        </div>
                     </FormField>
                 </FormRow>
                 <FormRow>

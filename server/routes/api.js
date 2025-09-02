@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 
 // Import Models
 const Client = require('../models/Client');
@@ -52,6 +53,54 @@ router.get('/data', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+// GSTIN LOOKUP
+router.get('/gst/:gstin', async (req, res) => {
+    const { gstin } = req.params;
+    const apiKey = process.env.GSTINCHECK_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ message: 'GST API key is not configured.' });
+    }
+
+    const url = `https://sheet.gstincheck.co.in/check/${apiKey}/${gstin}`;
+
+    try {
+        const response = await axios.get(url);
+
+        // The API returns a `flag: true` on success.
+        if (response.data && response.data.flag) {
+            const apiData = response.data.data;
+
+            // Extracting fields based on common GST API responses.
+            // Using || '' to ensure we don't send back null values.
+            const legalName = apiData.lgnm || '';
+            const tradeName = apiData.trdnm || '';
+            const addressObj = apiData.pradr?.addr || {};
+
+            const address = [
+                addressObj.bnm,
+                addressObj.st,
+                addressObj.loc,
+                addressObj.city,
+                addressObj.dst,
+                addressObj.pncd
+            ].filter(Boolean).join(', ');
+
+            res.json({
+                legalName: legalName,
+                tradeName: tradeName,
+                address: address,
+            });
+        } else {
+            // Handle cases where the API call is successful but the GSTIN is invalid
+            res.status(404).json({ message: response.data.message || 'Invalid GSTIN or data not found.' });
+        }
+    } catch (error) {
+        console.error('GST API call failed:', error.response ? error.response.data : error.message);
+        res.status(500).json({ message: 'An error occurred while fetching GST data.' });
     }
 });
 
