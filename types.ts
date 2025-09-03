@@ -132,6 +132,7 @@ export interface LorryReceipt {
   isPickupDeliverySameAsPartyAddress: boolean;
   loadingAddress?: string;
   deliveryAddress?: string;
+  showFreightDetails?: boolean;
 }
 
 export type LorryReceiptCopyType = 'Consigner' | 'Consignee' | 'Driver' | 'Office';

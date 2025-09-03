@@ -88,7 +88,7 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
             </div>
 
             <div className="flex">
-                <div className="w-2/3 pr-2">
+                <div className={lr.showFreightDetails ? "w-2/3 pr-2" : "w-full"}>
                     <table className="w-full mt-2 border-collapse border border-black">
                         <thead>
                             <tr className="border border-black">
@@ -125,29 +125,31 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                         </tfoot>
                     </table>
                 </div>
-                <div className="w-1/3 pl-2 mt-2">
-                    <table className="w-full border-collapse border border-black">
-                        <tbody>
-                            {[
-                                { label: 'Total Basic Freight', value: freightDetails.basicFreight },
-                                { label: 'Packing & Unpacking Charge', value: freightDetails.packingCharge },
-                                { label: 'Pickup Charges & Door Delivery', value: freightDetails.pickupCharge },
-                                { label: 'Service Charge', value: freightDetails.serviceCharge },
-                                { label: 'Loading Charges & Unloading', value: freightDetails.loadingCharge },
-                                { label: 'Cash On Delivery(COD)', value: freightDetails.codDodCharge },
-                                { label: 'Other Charges', value: freightDetails.otherCharges },
-                            ].map(item => (
-                                <tr key={item.label}><td className="p-1 border border-black">{item.label}</td><td className="p-1 border border-black text-right">{formatCurrency(item.value)}</td></tr>
-                            ))}
-                            <tr className="font-bold"><td className="p-1 border border-black">Subtotal</td><td className="p-1 border border-black text-right">{formatCurrency(subtotal)}</td></tr>
-                            <tr><td className="p-1 border border-black">GST TAX (SGST {freightDetails.sgstPercent}%)</td><td className="p-1 border border-black text-right">{formatCurrency(sgst)}</td></tr>
-                            <tr><td className="p-1 border border-black">GST TAX (CGST {freightDetails.cgstPercent}%)</td><td className="p-1 border border-black text-right">{formatCurrency(cgst)}</td></tr>
-                            <tr className="font-bold"><td className="p-1 border border-black">Total Freight</td><td className="p-1 border border-black text-right">{formatCurrency(totalFreight)}</td></tr>
-                            <tr><td className="p-1 border border-black">Advance Paid</td><td className="p-1 border border-black text-right">{formatCurrency(freightDetails.advancePaid)}</td></tr>
-                            <tr className="font-bold"><td className="p-1 border border-black">Remaining Payable Amount</td><td className="p-1 border border-black text-right">{formatCurrency(remainingPayable)}</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                {lr.showFreightDetails && (
+                    <div className="w-1/3 pl-2 mt-2">
+                        <table className="w-full border-collapse border border-black">
+                            <tbody>
+                                {[
+                                    { label: 'Total Basic Freight', value: freightDetails.basicFreight },
+                                    { label: 'Packing & Unpacking Charge', value: freightDetails.packingCharge },
+                                    { label: 'Pickup Charges & Door Delivery', value: freightDetails.pickupCharge },
+                                    { label: 'Service Charge', value: freightDetails.serviceCharge },
+                                    { label: 'Loading Charges & Unloading', value: freightDetails.loadingCharge },
+                                    { label: 'Cash On Delivery(COD)', value: freightDetails.codDodCharge },
+                                    { label: 'Other Charges', value: freightDetails.otherCharges },
+                                ].map(item => (
+                                    <tr key={item.label}><td className="p-1 border border-black">{item.label}</td><td className="p-1 border border-black text-right">{formatCurrency(item.value)}</td></tr>
+                                ))}
+                                <tr className="font-bold"><td className="p-1 border border-black">Subtotal</td><td className="p-1 border border-black text-right">{formatCurrency(subtotal)}</td></tr>
+                                <tr><td className="p-1 border border-black">GST TAX (SGST {freightDetails.sgstPercent}%)</td><td className="p-1 border border-black text-right">{formatCurrency(sgst)}</td></tr>
+                                <tr><td className="p-1 border border-black">GST TAX (CGST {freightDetails.cgstPercent}%)</td><td className="p-1 border border-black text-right">{formatCurrency(cgst)}</td></tr>
+                                <tr className="font-bold"><td className="p-1 border border-black">Total Freight</td><td className="p-1 border border-black text-right">{formatCurrency(totalFreight)}</td></tr>
+                                <tr><td className="p-1 border border-black">Advance Paid</td><td className="p-1 border border-black text-right">{formatCurrency(freightDetails.advancePaid)}</td></tr>
+                                <tr className="font-bold"><td className="p-1 border border-black">Remaining Payable Amount</td><td className="p-1 border border-black text-right">{formatCurrency(remainingPayable)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-2 border-t border-black pt-2">

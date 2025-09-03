@@ -120,6 +120,7 @@ const emptyFormData: Omit<LorryReceipt, 'id' | 'status'> = {
     bankIfsc: '',
     receiverComments: '',
     isPickupDeliverySameAsPartyAddress: true,
+    showFreightDetails: false,
 };
 
 const mockHsnDatabase: { [key: string]: string | string[] } = {
@@ -160,6 +161,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
     const [hsnResults, setHsnResults] = useState<{ [key: number]: string[] }>({});
     const [isHsnLoading, setIsHsnLoading] = useState<{ [key: number]: boolean }>({});
     const [isProductNameManual, setIsProductNameManual] = useState<{ [key: number]: boolean }>({ 0: true });
+    const [isFreightVisible, setIsFreightVisible] = useState(lrToEdit?.showFreightDetails || false);
 
     const selectedConsignor = useMemo(() => clients.find(c => c.id === formData.consignorId), [formData.consignorId, clients]);
     const selectedConsignee = useMemo(() => clients.find(c => c.id === formData.consigneeId), [formData.consigneeId, clients]);
@@ -460,31 +462,44 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
                  </fieldset>
 
                  <fieldset className="border p-4 rounded-md">
-                    <legend className="px-2 font-semibold text-gray-700">Freight Calculation</legend>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                        <div className="space-y-2">
-                             <FormRow>
-                                <FormField label="Basic Freight"><TextInput type="number" name="basicFreight" value={formData.freightDetails.basicFreight || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Packing Charge"><TextInput type="number" name="packingCharge" value={formData.freightDetails.packingCharge || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
-                             <FormRow>
-                                <FormField label="Pickup Charge"><TextInput type="number" name="pickupCharge" value={formData.freightDetails.pickupCharge || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Loading Charge"><TextInput type="number" name="loadingCharge" value={formData.freightDetails.loadingCharge || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
-                             <FormRow>
-                                <FormField label="Other Charges"><TextInput type="number" name="otherCharges" value={formData.freightDetails.otherCharges || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Advance Paid"><TextInput type="number" name="advancePaid" value={formData.freightDetails.advancePaid || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
+                    <legend className="px-2 font-semibold text-gray-700">Freight Details</legend>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const newVisibility = !isFreightVisible;
+                            setIsFreightVisible(newVisibility);
+                            setFormData(prev => ({ ...prev, showFreightDetails: newVisibility }));
+                        }}
+                        className="mb-4 text-sm text-blue-600 hover:underline"
+                    >
+                        {isFreightVisible ? 'Hide Freight Details' : 'Show Freight Details'}
+                    </button>
+                    {isFreightVisible && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 animate-fade-in">
+                            <div className="space-y-2">
+                                <FormRow>
+                                    <FormField label="Basic Freight"><TextInput type="number" name="basicFreight" value={formData.freightDetails.basicFreight || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Packing Charge"><TextInput type="number" name="packingCharge" value={formData.freightDetails.packingCharge || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                                <FormRow>
+                                    <FormField label="Pickup Charge"><TextInput type="number" name="pickupCharge" value={formData.freightDetails.pickupCharge || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Loading Charge"><TextInput type="number" name="loadingCharge" value={formData.freightDetails.loadingCharge || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                                <FormRow>
+                                    <FormField label="Other Charges"><TextInput type="number" name="otherCharges" value={formData.freightDetails.otherCharges || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Advance Paid"><TextInput type="number" name="advancePaid" value={formData.freightDetails.advancePaid || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                            </div>
+                            <div className="space-y-2 text-sm border-t md:border-t-0 md:border-l md:pl-4 mt-4 md:mt-0 pt-4 md:pt-0">
+                                <div className="flex justify-between"><span className="text-gray-600">Subtotal:</span> <span className="font-medium">{totals.subtotal.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">SGST:</span> <span className="font-medium">{totals.sgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">CGST:</span> <span className="font-medium">{totals.cgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between font-bold text-base border-t pt-1"><span className="text-gray-800">Total Freight:</span> <span>{totals.totalFreight.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Advance Paid:</span> <span className="font-medium text-green-600">-{formData.freightDetails.advancePaid.toFixed(2)}</span></div>
+                                <div className="flex justify-between font-bold text-base text-red-600 border-t pt-1"><span >Remaining Payable:</span> <span>{totals.remainingPayable.toFixed(2)}</span></div>
+                            </div>
                         </div>
-                         <div className="space-y-2 text-sm border-t md:border-t-0 md:border-l md:pl-4 mt-4 md:mt-0 pt-4 md:pt-0">
-                            <div className="flex justify-between"><span className="text-gray-600">Subtotal:</span> <span className="font-medium">{totals.subtotal.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">SGST:</span> <span className="font-medium">{totals.sgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">CGST:</span> <span className="font-medium">{totals.cgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between font-bold text-base border-t pt-1"><span className="text-gray-800">Total Freight:</span> <span>{totals.totalFreight.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Advance Paid:</span> <span className="font-medium text-green-600">-{formData.freightDetails.advancePaid.toFixed(2)}</span></div>
-                            <div className="flex justify-between font-bold text-base text-red-600 border-t pt-1"><span >Remaining Payable:</span> <span>{totals.remainingPayable.toFixed(2)}</span></div>
-                         </div>
-                    </div>
+                    )}
                  </fieldset>
 
                 <fieldset className="border p-4 rounded-md">
