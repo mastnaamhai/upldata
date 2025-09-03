@@ -132,6 +132,7 @@ export interface LorryReceipt {
   isPickupDeliverySameAsPartyAddress: boolean;
   loadingAddress?: string;
   deliveryAddress?: string;
+  includeFreightDetails: boolean;
 }
 
 export type LorryReceiptCopyType = 'Consigner' | 'Consignee' | 'Driver' | 'Office';
@@ -144,6 +145,12 @@ export interface Client {
   email: string;
   gstin: string;
   address: string;
+}
+
+export interface GstDetails {
+    legalName: string;
+    tradeName: string;
+    address: string;
 }
 
 export type ExpenseCategory = 'Fuel' | 'Salary' | 'Office Rent' | 'Maintenance' | 'Toll' | 'Other';

@@ -77,9 +77,15 @@ export const deleteExpense = async (expenseId: string): Promise<void> => {
     await apiFetch(`/expenses/${expenseId}`, { method: 'DELETE' });
 };
 
+import { GstDetails } from '../types';
+
 export const savePayment = async (paymentData: Omit<Payment, 'id'>): Promise<Payment> => {
     return apiFetch<Payment>('/payments', {
         method: 'POST',
         body: JSON.stringify(paymentData),
     });
+};
+
+export const getGstDetails = async (gstin: string): Promise<GstDetails> => {
+    return apiFetch<GstDetails>(`/gst/${gstin}`);
 };

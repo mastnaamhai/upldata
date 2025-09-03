@@ -1,17 +1,8 @@
 import React, { useState, FormEvent, useMemo, useEffect } from 'react';
 import type { Client, AppSettings } from '../types';
 import { SearchIcon } from './icons';
-import { FormRow, FormField, TextInput, TextAreaInput } from './FormComponents';
+import ClientForm from './ClientForm';
 import ClientListPDF from './ClientListPDF';
-
-const emptyClient: Omit<Client, 'id'> = {
-    name: '',
-    contactPerson: '',
-    phone: '',
-    email: '',
-    gstin: '',
-    address: '',
-};
 
 const defaultSettings: AppSettings = {
   theme: 'light',
@@ -25,61 +16,6 @@ const defaultSettings: AppSettings = {
       address: 'No-51-C, Shri Balaji Nagar, Part-1 Extension, Puzhal Camp, Chennai-600066\nPhone: 9790700241 / 9003045541\nEmail: allindialogisticschennai@gmail.com\nWebsite: www.allindialogisticschennai.in',
       logo: '',
   }
-};
-
-
-const ClientForm: React.FC<{ 
-    onSave: (client: Client) => void; 
-    onCancel: () => void;
-    clientToEdit: Client | null;
-}> = ({ onSave, onCancel, clientToEdit }) => {
-
-    const [formData, setFormData] = useState<Omit<Client, 'id'> | Client>(clientToEdit || emptyClient);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        onSave(formData as Client);
-    };
-
-    return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-lg animate-fade-in mb-4">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4">{clientToEdit ? 'Edit Client' : 'Add New Client'}</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <FormRow>
-                    <FormField label="Client / Company Name">
-                        <TextInput name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Acme Corp" required />
-                    </FormField>
-                    <FormField label="GSTIN">
-                        <TextInput name="gstin" value={formData.gstin} onChange={handleChange} placeholder="e.g. 29ABCDE1234F1Z5" required />
-                    </FormField>
-                </FormRow>
-                <FormRow>
-                    <FormField label="Contact Person">
-                        <TextInput name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="e.g. John Doe" />
-                    </FormField>
-                    <FormField label="Phone Number">
-                        <TextInput name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 9876543210" required />
-                    </FormField>
-                </FormRow>
-                 <FormField label="Email Address">
-                    <TextInput name="email" value={formData.email} onChange={handleChange} placeholder="e.g. contact@acme.com" />
-                </FormField>
-                <FormField label="Billing Address">
-                    <TextAreaInput name="address" value={formData.address} onChange={handleChange} placeholder="Full billing address" />
-                </FormField>
-
-                <div className="flex justify-end space-x-2 pt-4">
-                    <button type="button" onClick={onCancel} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-slate-600 dark:text-gray-200 dark:hover:bg-slate-500">Cancel</button>
-                    <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{clientToEdit ? 'Save Changes' : 'Save Client'}</button>
-                </div>
-            </form>
-        </div>
-    );
 };
 
 
