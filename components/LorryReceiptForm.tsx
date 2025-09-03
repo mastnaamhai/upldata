@@ -1,85 +1,7 @@
 import React, { useState, FormEvent, useMemo, useEffect } from 'react';
 import type { LorryReceipt, Client, GoodsItem, FreightDetails } from '../types';
 import { FormRow, FormField, TextInput, DropdownInput, TextAreaInput } from './FormComponents';
-
-
-const ClientFormModal: React.FC<{
-    onSave: (clientData: Omit<Client, 'id'>) => void;
-    onCancel: () => void;
-}> = ({ onSave, onCancel }) => {
-    const [formData, setFormData] = useState<Omit<Client, 'id'>>({ name: '', gstin: '', address: '', contactPerson: '', email: '', phone: '' });
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleGstFetch = async () => {
-        if (!formData.gstin || formData.gstin.length !== 15) {
-            setError('Please enter a valid 15-digit GSTIN.');
-            return;
-        }
-        setIsLoading(true);
-        setError('');
-        // This is a mock API call. In a real app, you would fetch from a GST API.
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (formData.gstin === '29ABCDE1234F1Z5') {
-            setFormData(prev => ({
-                ...prev,
-                name: 'Mast Naam (Fetched)',
-                address: '123, Business Avenue, Bengaluru, India (Fetched)',
-            }));
-        } else {
-            setError('GSTIN not found. Please enter details manually.');
-        }
-        setIsLoading(false);
-    };
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        if (!formData.name) {
-            setError('Client Name is required.');
-            return;
-        }
-        onSave(formData);
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg animate-fade-in">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Add New Client</h3>
-                <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-                    <FormField label="Client / Company Name">
-                        <TextInput name="name" value={formData.name} onChange={handleChange} required />
-                    </FormField>
-                    <FormField label="GST Number">
-                        <div className="flex space-x-2">
-                            <TextInput name="gstin" value={formData.gstin} onChange={handleChange} placeholder="15-digit GSTIN" />
-                            <button type="button" onClick={handleGstFetch} disabled={isLoading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300">
-                                {isLoading ? 'Fetching...' : 'Fetch Data'}
-                            </button>
-                        </div>
-                    </FormField>
-                    <FormField label="Party Address">
-                        <TextAreaInput name="address" value={formData.address} onChange={handleChange} />
-                    </FormField>
-                    <FormRow>
-                        <FormField label="Contact Person"><TextInput name="contactPerson" value={formData.contactPerson} onChange={handleChange} /></FormField>
-                        <FormField label="Phone"><TextInput name="phone" value={formData.phone} onChange={handleChange} /></FormField>
-                    </FormRow>
-                    {error && <p className="text-red-500 text-xs">{error}</p>}
-                    <div className="flex justify-end space-x-2 pt-4">
-                        <button type="button" onClick={onCancel} className="px-4 py-2 font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Cancel</button>
-                        <button type="submit" className="px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Save Client</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
+import ClientForm from './ClientForm';
 
 
 interface LorryReceiptFormProps {
@@ -120,6 +42,7 @@ const emptyFormData: Omit<LorryReceipt, 'id' | 'status'> = {
     bankIfsc: '',
     receiverComments: '',
     isPickupDeliverySameAsPartyAddress: true,
+    includeFreightDetails: false,
 };
 
 const mockHsnDatabase: { [key: string]: string | string[] } = {
@@ -334,7 +257,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
 
     return (
         <>
-        {isClientModalOpen && <ClientFormModal onSave={handleSaveNewClient} onCancel={() => setIsClientModalOpen(false)} />}
+        {isClientModalOpen && <ClientForm onSave={handleSaveNewClient} onCancel={() => setIsClientModalOpen(false)} clientToEdit={null} />}
         <div className="bg-white p-6 rounded-lg shadow-lg animate-fade-in">
             <h2 className="text-xl font-bold text-gray-800 mb-6">{lrToEdit ? 'Edit' : 'Generate'} Lorry Receipt / Bilty</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -459,33 +382,42 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
                     <button type="button" onClick={addGoodsItem} className="mt-2 text-sm text-blue-600 hover:underline">+ Add Item</button>
                  </fieldset>
 
-                 <fieldset className="border p-4 rounded-md">
-                    <legend className="px-2 font-semibold text-gray-700">Freight Calculation</legend>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                        <div className="space-y-2">
-                             <FormRow>
-                                <FormField label="Basic Freight"><TextInput type="number" name="basicFreight" value={formData.freightDetails.basicFreight || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Packing Charge"><TextInput type="number" name="packingCharge" value={formData.freightDetails.packingCharge || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
-                             <FormRow>
-                                <FormField label="Pickup Charge"><TextInput type="number" name="pickupCharge" value={formData.freightDetails.pickupCharge || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Loading Charge"><TextInput type="number" name="loadingCharge" value={formData.freightDetails.loadingCharge || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
-                             <FormRow>
-                                <FormField label="Other Charges"><TextInput type="number" name="otherCharges" value={formData.freightDetails.otherCharges || ''} onChange={handleFreightChange} /></FormField>
-                                <FormField label="Advance Paid"><TextInput type="number" name="advancePaid" value={formData.freightDetails.advancePaid || ''} onChange={handleFreightChange} /></FormField>
-                             </FormRow>
-                        </div>
-                         <div className="space-y-2 text-sm border-t md:border-t-0 md:border-l md:pl-4 mt-4 md:mt-0 pt-4 md:pt-0">
-                            <div className="flex justify-between"><span className="text-gray-600">Subtotal:</span> <span className="font-medium">{totals.subtotal.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">SGST:</span> <span className="font-medium">{totals.sgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">CGST:</span> <span className="font-medium">{totals.cgst.toFixed(2)}</span></div>
-                            <div className="flex justify-between font-bold text-base border-t pt-1"><span className="text-gray-800">Total Freight:</span> <span>{totals.totalFreight.toFixed(2)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Advance Paid:</span> <span className="font-medium text-green-600">-{formData.freightDetails.advancePaid.toFixed(2)}</span></div>
-                            <div className="flex justify-between font-bold text-base text-red-600 border-t pt-1"><span >Remaining Payable:</span> <span>{totals.remainingPayable.toFixed(2)}</span></div>
-                         </div>
+                <div className="pt-2">
+                    <div className="flex items-center space-x-2 mb-2">
+                        <input type="checkbox" id="includeFreightDetails" name="includeFreightDetails" checked={formData.includeFreightDetails} onChange={e => setFormData(prev => ({ ...prev, includeFreightDetails: e.target.checked }))} />
+                        <label htmlFor="includeFreightDetails" className="text-sm font-medium">Include Freight Details</label>
                     </div>
-                 </fieldset>
+                </div>
+
+                {formData.includeFreightDetails && (
+                    <fieldset className="border p-4 rounded-md">
+                        <legend className="px-2 font-semibold text-gray-700">Freight Calculation</legend>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                            <div className="space-y-2">
+                                <FormRow>
+                                    <FormField label="Basic Freight"><TextInput type="number" name="basicFreight" value={formData.freightDetails.basicFreight || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Packing Charge"><TextInput type="number" name="packingCharge" value={formData.freightDetails.packingCharge || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                                <FormRow>
+                                    <FormField label="Pickup Charge"><TextInput type="number" name="pickupCharge" value={formData.freightDetails.pickupCharge || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Loading Charge"><TextInput type="number" name="loadingCharge" value={formData.freightDetails.loadingCharge || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                                <FormRow>
+                                    <FormField label="Other Charges"><TextInput type="number" name="otherCharges" value={formData.freightDetails.otherCharges || ''} onChange={handleFreightChange} /></FormField>
+                                    <FormField label="Advance Paid"><TextInput type="number" name="advancePaid" value={formData.freightDetails.advancePaid || ''} onChange={handleFreightChange} /></FormField>
+                                </FormRow>
+                            </div>
+                            <div className="space-y-2 text-sm border-t md:border-t-0 md:border-l md:pl-4 mt-4 md:mt-0 pt-4 md:pt-0">
+                                <div className="flex justify-between"><span className="text-gray-600">Subtotal:</span> <span className="font-medium">{totals.subtotal.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">SGST:</span> <span className="font-medium">{totals.sgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">CGST:</span> <span className="font-medium">{totals.cgst.toFixed(2)}</span></div>
+                                <div className="flex justify-between font-bold text-base border-t pt-1"><span className="text-gray-800">Total Freight:</span> <span>{totals.totalFreight.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Advance Paid:</span> <span className="font-medium text-green-600">-{formData.freightDetails.advancePaid.toFixed(2)}</span></div>
+                                <div className="flex justify-between font-bold text-base text-red-600 border-t pt-1"><span >Remaining Payable:</span> <span>{totals.remainingPayable.toFixed(2)}</span></div>
+                            </div>
+                        </div>
+                    </fieldset>
+                )}
 
                 <fieldset className="border p-4 rounded-md">
                     <legend className="px-2 font-semibold text-gray-700">Other Details</legend>
