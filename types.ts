@@ -78,61 +78,62 @@ export interface Invoice {
 }
 
 
-export interface GoodsItem {
-  id: string;
-  productName: string;
-  packagingType: string;
-  hsnCode: string;
-  packages: number;
-  actualWeight: number;
-  chargeWeight: number;
-  freightRate: number;
-}
 
-export interface FreightDetails {
-  basicFreight: number;
-  packingCharge: number;
-  pickupCharge: number;
-  serviceCharge: number;
-  loadingCharge: number;
-  codDodCharge: number;
-  haltingCharge?: number;
-  extraCharge?: number;
-  otherCharges: number;
-  sgstPercent: number;
-  cgstPercent: number;
-  advancePaid: number;
-}
+export type LrStatus = 'Booked' | 'Dispatched' | 'In Transit' | 'Delivered' | 'Closed';
+
+export type LrBookingData = Pick<LorryReceipt,
+  | 'consignor_name'
+  | 'consignee_name'
+  | 'origin_location'
+  | 'destination_location'
+  | 'goods_description'
+  | 'quantity'
+  | 'weight'
+  | 'freight_type'
+  | 'freight_amount'
+  | 'hide_freight_in_pdf'
+>;
+
+export type NewLrPayload = LrBookingData & {
+  lr_number: string;
+  booking_time: string;
+  status: 'Booked';
+};
 
 export interface LorryReceipt {
-  id: string;
-  lrNumber: string;
-  date: string;
-  from: string;
-  to: string;
-  consignorId: string;
-  consigneeId: string;
-  vehicleNumber: string;
-  driverName: string;
-  driverPhone: string;
-  paymentStatus: 'Paid' | 'To Pay' | 'Part Paid';
-  transportMode: string;
-  deliveryType: string;
-  goods: GoodsItem[];
-  freightDetails: FreightDetails;
-  gstPayableBy: 'Consignor' | 'Consignee';
-  otherRemark?: string;
-  bankName?: string;
-  bankAccountNo?: string;
-  bankIfsc?: string;
-  demurrageAfterHours: number;
-  demurrageChargePerHour: number;
-  receiverComments?: string;
-  status: 'Billed' | 'Un-Billed';
-  isPickupDeliverySameAsPartyAddress: boolean;
-  loadingAddress?: string;
-  deliveryAddress?: string;
-  includeFreightDetails: boolean;
+  id: string; // Corresponds to mongoose _id
+  lr_number: string;
+
+  // Phase 1: Booking
+  consignor_name: string;
+  consignee_name: string;
+  goods_description: string;
+  quantity: number;
+  weight: number;
+  origin_location: string;
+  destination_location: string;
+  freight_type: 'Paid' | 'Due';
+  freight_amount: number;
+  hide_freight_in_pdf: boolean;
+  booking_time: string; // ISO 8601 Date string
+
+  // Phase 2: Dispatch
+  vehicle_number?: string;
+  driver_name?: string;
+  dispatch_time?: string; // ISO 8601 Date string
+
+  // Phase 3: In Transit
+  current_location?: string;
+  transit_updates?: { location: string; timestamp: string }[];
+
+  // Phase 4: Delivery
+  proof_of_delivery?: string; // Path to signature or image file
+  delivery_time?: string; // ISO 8601 Date string
+
+  // Phase 5: Closure
+  closure_time?: string; // ISO 8601 Date string
+
+  status: LrStatus;
 }
 
 export type LorryReceiptCopyType = 'Consigner' | 'Consignee' | 'Driver' | 'Office';
@@ -141,7 +142,7 @@ export interface Client {
   id: string;
   name: string;
   contactPerson: string;
-  phone: string;
+  phone?: string;
   email: string;
   gstin: string;
   address: string;

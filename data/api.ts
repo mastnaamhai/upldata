@@ -1,4 +1,4 @@
-import { AppData, Client, Invoice, LorryReceipt, Expense, Payment } from '../types';
+import { AppData, Client, Invoice, LorryReceipt, Expense, Payment, NewLrPayload } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://upldata.onrender.com';
 
@@ -55,7 +55,10 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
     return apiFetch<{ updatedLrs: LorryReceipt[] }>(`/invoices/${invoiceId}`, { method: 'DELETE' });
 };
 
-export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
+export const saveLR = async (lr: NewLrPayload): Promise<LorryReceipt> => {
+    // The backend endpoint for POST /lrs is now only for creating new LRs.
+    // The payload should be clean, but we send it as is.
+    // The backend will create a new LorryReceipt document from this payload.
     return apiFetch<LorryReceipt>('/lrs', {
         method: 'POST',
         body: JSON.stringify(lr),
@@ -64,6 +67,33 @@ export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
 
 export const deleteLR = async (lrId: string): Promise<void> => {
     await apiFetch(`/lrs/${lrId}`, { method: 'DELETE' });
+};
+
+export const dispatchLR = async (lrId: string, dispatchData: { vehicle_number: string; driver_name: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/dispatch`, {
+        method: 'POST',
+        body: JSON.stringify(dispatchData),
+    });
+};
+
+export const updateTransitLR = async (lrId: string, transitData: { location: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/update-transit`, {
+        method: 'POST',
+        body: JSON.stringify(transitData),
+    });
+};
+
+export const deliverLR = async (lrId: string, deliveryData: { proof_of_delivery: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/deliver`, {
+        method: 'POST',
+        body: JSON.stringify(deliveryData),
+    });
+};
+
+export const closeLR = async (lrId: string): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/close`, {
+        method: 'POST',
+    });
 };
 
 export const saveExpense = async (expense: Expense): Promise<Expense> => {

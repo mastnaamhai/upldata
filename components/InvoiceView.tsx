@@ -112,7 +112,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ selectedFy, clients, invoices
     };
     
     const filteredUnbilledLRs = useMemo(() => {
-        return unbilledLRs.filter(lr => dateIsInFy(lr.date, selectedFy));
+        return unbilledLRs.filter(lr => dateIsInFy(lr.booking_time, selectedFy));
     }, [selectedFy, unbilledLRs]);
     
     const proceedToGenerateFromLR = () => {
@@ -131,18 +131,18 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ selectedFy, clients, invoices
 
         const lrDetails: LrDetail[] = lrsToBill.map(lr => ({
             id: lr.id,
-            lrNumber: lr.lrNumber,
-            date: lr.date,
-            truckNumber: lr.vehicleNumber,
-            from: lr.from,
-            to: lr.to,
-            materialDetails: lr.goods.map(g => g.productName).join(', '),
-            articles: lr.goods.reduce((sum, g) => sum + g.packages, 0),
-            totalWeight: lr.goods.reduce((sum, g) => sum + g.chargeWeight, 0),
-            freightAmount: lr.freightDetails.basicFreight,
-            haltingCharge: lr.freightDetails.haltingCharge || 0,
-            extraCharge: lr.freightDetails.extraCharge || 0,
-            advance: lr.freightDetails.advancePaid || 0,
+            lrNumber: lr.lr_number,
+            date: lr.booking_time,
+            truckNumber: lr.vehicle_number || '',
+            from: lr.origin_location,
+            to: lr.destination_location,
+            materialDetails: lr.goods_description,
+            articles: lr.quantity,
+            totalWeight: lr.weight,
+            freightAmount: lr.freight_amount,
+            haltingCharge: 0, // This field is no longer on the new LR model
+            extraCharge: 0, // This field is no longer on the new LR model
+            advance: 0, // This field is no longer on the new LR model
         }));
         
         const totalTripAmount = lrDetails.reduce((sum, item) => sum + (item.freightAmount || 0) + (item.haltingCharge || 0) + (item.extraCharge || 0), 0);
@@ -238,17 +238,27 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ selectedFy, clients, invoices
                             </button>
                         </div>
                         <div className="space-y-3">
-                            {filteredUnbilledLRs.map(lr => (
-                                <div key={lr.id} className="border dark:border-gray-700 rounded-lg p-4 flex items-start space-x-4">
-                                    <input type="checkbox" className="mt-1" checked={selectedLRs.includes(lr.id)} onChange={() => toggleLRSelection(lr.id)} />
-                                    <div className="flex-1 grid grid-cols-4 gap-4 text-sm">
-                                        <div><p className="text-gray-500 dark:text-gray-400">LR Number</p><p className="font-medium dark:text-gray-200">{lr.lrNumber}</p></div>
-                                        <div><p className="text-gray-500 dark:text-gray-400">Date</p><p className="font-medium dark:text-gray-200">{lr.date}</p></div>
-                                        <div><p className="text-gray-500 dark:text-gray-400">From / To</p><p className="font-medium dark:text-gray-200">{lr.from} &rarr; {lr.to}</p></div>
-                                        <div><p className="text-gray-500 dark:text-gray-400">Payment Status</p><p className={`font-semibold ${lr.paymentStatus === 'Paid' ? 'text-green-600' : 'text-orange-600'}`}>{lr.paymentStatus}</p></div>
+                            {filteredUnbilledLRs.map(lr => {
+                                const consignee = clients.find(c => c.id === lr.consigneeId);
+                                const totalPacks = lr.goods.reduce((sum, g) => sum + g.packages, 0);
+                                const totalWeight = lr.goods.reduce((sum, g) => sum + g.chargeWeight, 0);
+                                const totalFreight = lr.freightDetails.basicFreight + lr.freightDetails.packingCharge + lr.freightDetails.pickupCharge + lr.freightDetails.serviceCharge + lr.freightDetails.loadingCharge + lr.freightDetails.codDodCharge + lr.freightDetails.otherCharges;
+
+                                return (
+                                    <div key={lr.id} className="border dark:border-gray-700 rounded-lg p-4 flex items-start space-x-4 text-sm">
+                                        <input type="checkbox" className="mt-1 flex-shrink-0" checked={selectedLRs.includes(lr.id)} onChange={() => toggleLRSelection(lr.id)} />
+                                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2">
+                                            <div><p className="text-gray-500 dark:text-gray-400">LR Number</p><p className="font-medium dark:text-gray-200">{lr.lrNumber}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">LR Date</p><p className="font-medium dark:text-gray-200">{new Date(lr.date).toLocaleDateString('en-GB')}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">Destination</p><p className="font-medium dark:text-gray-200">{lr.to}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">Consignee</p><p className="font-medium dark:text-gray-200">{consignee?.name || 'N/A'}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">Packs</p><p className="font-medium dark:text-gray-200">{totalPacks}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">Weight</p><p className="font-medium dark:text-gray-200">{totalWeight.toFixed(2)}</p></div>
+                                            <div><p className="text-gray-500 dark:text-gray-400">Freight Charges</p><p className="font-medium dark:text-gray-200">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(totalFreight)}</p></div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                      </div>
                 )}
