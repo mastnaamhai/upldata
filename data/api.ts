@@ -56,13 +56,14 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
 };
 
 export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
+    // Deep copy to avoid mutating the original state object which can cause issues with React.
     const lrToSend = JSON.parse(JSON.stringify(lr));
 
-    // To prevent any validation errors from temporary frontend fields (like temporary IDs),
-    // we rebuild the goods array, only including fields defined in the backend schema.
-    // This is a safer "whitelisting" approach.
+    // To prevent validation errors from temporary frontend IDs, we must clean the goods array.
+    // This "whitelisting" approach rebuilds the array, ensuring only schema-compliant data is sent.
     if (lrToSend.goods) {
         lrToSend.goods = lrToSend.goods.map((item: any) => {
+            // Create a new object with only the fields defined in the backend schema.
             const newItem: any = {
                 productName: item.productName,
                 packagingType: item.packagingType,
@@ -71,11 +72,16 @@ export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
                 actualWeight: item.actualWeight,
                 chargeWeight: item.chargeWeight,
             };
-            // If it's an existing item with a valid DB id, we preserve it by mapping it to `_id`.
-            // The backend expects `_id` for updates.
+
+            // If the item is an existing sub-document, it will have a 24-character hex string ID.
+            // We must preserve this ID for Mongoose to correctly update the item.
+            // Mongoose expects this field to be `_id` in the update payload.
             if (item.id && typeof item.id === 'string' && item.id.length === 24) {
                 newItem._id = item.id;
             }
+
+            // New items, with temporary timestamp-based IDs, will not meet the condition.
+            // They will be sent without an `_id`, signaling to Mongoose to create a new sub-document.
             return newItem;
         });
     }
