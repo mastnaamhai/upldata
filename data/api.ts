@@ -1,4 +1,4 @@
-import { AppData, Client, Invoice, LorryReceipt, Expense, Payment } from '../types';
+import { AppData, Client, Invoice, LorryReceipt, Expense, Payment, NewLrPayload } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://upldata.onrender.com';
 
@@ -55,45 +55,45 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
     return apiFetch<{ updatedLrs: LorryReceipt[] }>(`/invoices/${invoiceId}`, { method: 'DELETE' });
 };
 
-export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
-    // Deep copy to avoid mutating the original state object which can cause issues with React.
-    const lrToSend = JSON.parse(JSON.stringify(lr));
-
-    // To prevent validation errors from temporary frontend IDs, we must clean the goods array.
-    // This "whitelisting" approach rebuilds the array, ensuring only schema-compliant data is sent.
-    if (lrToSend.goods) {
-        lrToSend.goods = lrToSend.goods.map((item: any) => {
-            // Create a new object with only the fields defined in the backend schema.
-            const newItem: any = {
-                productName: item.productName,
-                packagingType: item.packagingType,
-                hsnCode: item.hsnCode,
-                packages: item.packages,
-                actualWeight: item.actualWeight,
-                chargeWeight: item.chargeWeight,
-            };
-
-            // If the item is an existing sub-document, it will have a 24-character hex string ID.
-            // We must preserve this ID for Mongoose to correctly update the item.
-            // Mongoose expects this field to be `_id` in the update payload.
-            if (item.id && typeof item.id === 'string' && item.id.length === 24) {
-                newItem._id = item.id;
-            }
-
-            // New items, with temporary timestamp-based IDs, will not meet the condition.
-            // They will be sent without an `_id`, signaling to Mongoose to create a new sub-document.
-            return newItem;
-        });
-    }
-
+export const saveLR = async (lr: NewLrPayload): Promise<LorryReceipt> => {
+    // The backend endpoint for POST /lrs is now only for creating new LRs.
+    // The payload should be clean, but we send it as is.
+    // The backend will create a new LorryReceipt document from this payload.
     return apiFetch<LorryReceipt>('/lrs', {
         method: 'POST',
-        body: JSON.stringify(lrToSend),
+        body: JSON.stringify(lr),
     });
 };
 
 export const deleteLR = async (lrId: string): Promise<void> => {
     await apiFetch(`/lrs/${lrId}`, { method: 'DELETE' });
+};
+
+export const dispatchLR = async (lrId: string, dispatchData: { vehicle_number: string; driver_name: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/dispatch`, {
+        method: 'POST',
+        body: JSON.stringify(dispatchData),
+    });
+};
+
+export const updateTransitLR = async (lrId: string, transitData: { location: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/update-transit`, {
+        method: 'POST',
+        body: JSON.stringify(transitData),
+    });
+};
+
+export const deliverLR = async (lrId: string, deliveryData: { proof_of_delivery: string }): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/deliver`, {
+        method: 'POST',
+        body: JSON.stringify(deliveryData),
+    });
+};
+
+export const closeLR = async (lrId: string): Promise<LorryReceipt> => {
+    return apiFetch<LorryReceipt>(`/lrs/${lrId}/close`, {
+        method: 'POST',
+    });
 };
 
 export const saveExpense = async (expense: Expense): Promise<Expense> => {

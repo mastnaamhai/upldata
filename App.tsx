@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { NavItem, AppSettings, Client, LorryReceipt, Invoice, Expense, Payment, AppData } from './types';
+import type { NavItem, AppSettings, Client, LorryReceipt, Invoice, Expense, Payment, AppData, NewLrPayload } from './types';
 import Sidebar from './components/Sidebar';
 import DashboardView from './components/DashboardView';
 import InvoiceView from './components/InvoiceView';
@@ -142,15 +142,12 @@ const App: React.FC = () => {
       }
   };
 
-  const handleSaveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
+  const handleSaveLR = async (lr: NewLrPayload): Promise<LorryReceipt> => {
       const savedLr = await api.saveLR(lr);
-      setAppData(prev => {
-          const exists = prev.lrs.some(l => l.id === savedLr.id);
-          const updatedLRs = exists
-            ? prev.lrs.map(l => l.id === savedLr.id ? savedLr : l)
-            : [savedLr, ...prev.lrs]
-          return { ...prev, lrs: updatedLRs };
-      });
+      setAppData(prev => ({
+          ...prev,
+          lrs: [savedLr, ...prev.lrs]
+      }));
       return savedLr;
   };
 
@@ -159,6 +156,42 @@ const App: React.FC = () => {
           await api.deleteLR(lrId);
           setAppData(prev => ({ ...prev, lrs: prev.lrs.filter(l => l.id !== lrId) }));
       }
+  };
+
+  const handleDispatchLR = async (lrId: string, dispatchData: { vehicle_number: string; driver_name: string }): Promise<LorryReceipt> => {
+      const updatedLr = await api.dispatchLR(lrId, dispatchData);
+      setAppData(prev => ({
+          ...prev,
+          lrs: prev.lrs.map(lr => lr.id === updatedLr.id ? updatedLr : lr),
+      }));
+      return updatedLr;
+  };
+
+  const handleDeliverLR = async (lrId: string, deliveryData: { proof_of_delivery: string }): Promise<LorryReceipt> => {
+      const updatedLr = await api.deliverLR(lrId, deliveryData);
+      setAppData(prev => ({
+          ...prev,
+          lrs: prev.lrs.map(lr => lr.id === updatedLr.id ? updatedLr : lr),
+      }));
+      return updatedLr;
+  };
+
+  const handleCloseLR = async (lrId: string): Promise<LorryReceipt> => {
+      const updatedLr = await api.closeLR(lrId);
+      setAppData(prev => ({
+          ...prev,
+          lrs: prev.lrs.map(lr => lr.id === updatedLr.id ? updatedLr : lr),
+      }));
+      return updatedLr;
+  };
+
+  const handleUpdateTransitLR = async (lrId: string, transitData: { location: string }): Promise<LorryReceipt> => {
+      const updatedLr = await api.updateTransitLR(lrId, transitData);
+      setAppData(prev => ({
+          ...prev,
+          lrs: prev.lrs.map(lr => lr.id === updatedLr.id ? updatedLr : lr),
+      }));
+      return updatedLr;
   };
 
   const handleSaveExpense = async (expense: Expense) => {
@@ -184,7 +217,10 @@ const App: React.FC = () => {
       setAppData(prev => ({ ...prev, payments: [newPayment, ...prev.payments] }));
   };
 
-  const unbilledLRs = useMemo(() => appData.lrs.filter(lr => lr.status === 'Un-Billed'), [appData.lrs]);
+  const unbilledLRs = useMemo(() => {
+    // In the new workflow, an LR is considered "unbilled" if it has been delivered but not yet closed.
+    return appData.lrs.filter(lr => lr.status === 'Delivered');
+  }, [appData.lrs]);
 
   if (!isAuthenticated) {
     return <LoginScreen onLogin={handleLogin} />;
@@ -209,7 +245,7 @@ const App: React.FC = () => {
       case 'invoice':
         return <InvoiceView selectedFy={selectedFy} clients={appData.clients} invoices={appData.invoices} unbilledLRs={unbilledLRs} onSave={handleSaveInvoice} onDelete={handleDeleteInvoice} />;
       case 'lorryReceipt':
-        return <LorryReceiptView selectedFy={selectedFy} clients={appData.clients} lrs={appData.lrs} onAddClient={handleSaveClient} onSave={handleSaveLR} onDelete={handleDeleteLR} />;
+        return <LorryReceiptView selectedFy={selectedFy} lrs={appData.lrs} onSave={handleSaveLR} onDelete={handleDeleteLR} onDispatch={handleDispatchLR} onUpdateTransit={handleUpdateTransitLR} onDeliver={handleDeliverLR} onClose={handleCloseLR} />;
       case 'clients':
         return <ClientView clients={appData.clients} onSave={handleSaveClient} onDelete={handleDeleteClient} />;
       case 'expenses':

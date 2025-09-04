@@ -1,62 +1,46 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const GoodsItemSchema = new Schema({
-  productName: String,
-  packagingType: String,
-  hsnCode: String,
-  packages: Number,
-  actualWeight: Number,
-  chargeWeight: Number,
-}, { _id: true });
-
-
-const FreightDetailsSchema = new Schema({
-  basicFreight: Number,
-  packingCharge: Number,
-  pickupCharge: Number,
-  serviceCharge: Number,
-  loadingCharge: Number,
-  codDodCharge: Number,
-  haltingCharge: Number,
-  extraCharge: Number,
-  otherCharges: Number,
-  sgstPercent: Number,
-  cgstPercent: Number,
-  advancePaid: Number,
-}, { _id: false });
-
 const LorryReceiptSchema = new Schema({
-  lrNumber: { type: String, required: true },
-  date: { type: String, required: true },
-  from: String,
-  to: String,
-  consignorId: { type: String, required: true },
-  consigneeId: { type: String, required: true },
-  vehicleNumber: String,
-  driverName: String,
-  driverPhone: String,
-  paymentStatus: String,
-  transportMode: String,
-  deliveryType: String,
-  goods: [GoodsItemSchema],
-  freightDetails: FreightDetailsSchema,
-  gstPayableBy: String,
-  otherRemark: String,
-  bankName: String,
-  bankAccountNo: String,
-  bankIfsc: String,
-  demurrageAfterHours: Number,
-  demurrageChargePerHour: Number,
-  receiverComments: String,
-  status: { type: String, enum: ['Billed', 'Un-Billed'], default: 'Un-Billed' },
-  isPickupDeliverySameAsPartyAddress: Boolean,
-  loadingAddress: String,
-  deliveryAddress: String,
-  eWayBillNumber: String,
-  sealNumber: String,
-  isInsured: Boolean,
-  insuranceDetails: String,
+  lr_number: { type: String, required: true, unique: true },
+
+  // Phase 1: Booking
+  consignor_name: { type: String, required: true },
+  consignee_name: { type: String, required: true },
+  goods_description: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  weight: { type: Number, required: true },
+  origin_location: { type: String, required: true },
+  destination_location: { type: String, required: true },
+  freight_type: { type: String, enum: ['Paid', 'Due'], required: true },
+  freight_amount: { type: Number, required: true },
+  hide_freight_in_pdf: { type: Boolean, default: false },
+  booking_time: { type: Date, default: Date.now },
+
+  // Phase 2: Dispatch
+  vehicle_number: String,
+  driver_name: String,
+  dispatch_time: Date,
+
+  // Phase 3: In Transit
+  current_location: String,
+  transit_updates: [{
+    location: String,
+    timestamp: { type: Date, default: Date.now }
+  }],
+
+  // Phase 4: Delivery
+  proof_of_delivery: String, // Path to signature or image file
+  delivery_time: Date,
+
+  // Phase 5: Closure
+  closure_time: Date,
+
+  status: {
+    type: String,
+    enum: ['Booked', 'Dispatched', 'In Transit', 'Delivered', 'Closed'],
+    default: 'Booked'
+  },
 });
 
 module.exports = mongoose.model('LorryReceipt', LorryReceiptSchema);
