@@ -58,15 +58,25 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
 export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
     const lrToSend = JSON.parse(JSON.stringify(lr));
 
-    // When adding a new sub-document (a good) to an existing LR, the frontend creates a temporary
-    // ID (a timestamp). Real Mongo ObjectIDs are 24-character hex strings.
-    // We need to remove any temporary IDs before sending to the backend, so Mongoose can
-    // generate a proper _id, without affecting existing goods that have valid IDs.
+    // To prevent any validation errors from temporary frontend fields (like temporary IDs),
+    // we rebuild the goods array, only including fields defined in the backend schema.
+    // This is a safer "whitelisting" approach.
     if (lrToSend.goods) {
-        lrToSend.goods.forEach((item: any) => {
-            if (item.id && item.id.length !== 24) {
-                delete item.id;
+        lrToSend.goods = lrToSend.goods.map((item: any) => {
+            const newItem: any = {
+                productName: item.productName,
+                packagingType: item.packagingType,
+                hsnCode: item.hsnCode,
+                packages: item.packages,
+                actualWeight: item.actualWeight,
+                chargeWeight: item.chargeWeight,
+            };
+            // If it's an existing item with a valid DB id, we preserve it by mapping it to `_id`.
+            // The backend expects `_id` for updates.
+            if (item.id && typeof item.id === 'string' && item.id.length === 24) {
+                newItem._id = item.id;
             }
+            return newItem;
         });
     }
 
