@@ -82,6 +82,7 @@ export interface GoodsItem {
   id: string;
   productName: string;
   packagingType: string;
+  hsnCode: string;
   packages: number;
   actualWeight: number;
   chargeWeight: number;

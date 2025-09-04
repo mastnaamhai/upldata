@@ -56,9 +56,21 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
 };
 
 export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
+    const lrToSend = JSON.parse(JSON.stringify(lr));
+
+    // If it is a new Lorry Receipt (i.e., it does not have an ID yet), we must remove the temporary
+    // frontend-only IDs from the goods items. This allows Mongoose to correctly generate the
+    // real `_id` for each sub-document upon creation.
+    // For existing LRs, the IDs are valid and must be kept for updates.
+    if (!lrToSend.id && lrToSend.goods) {
+        lrToSend.goods.forEach((item: any) => {
+            delete item.id;
+        });
+    }
+
     return apiFetch<LorryReceipt>('/lrs', {
         method: 'POST',
-        body: JSON.stringify(lr),
+        body: JSON.stringify(lrToSend),
     });
 };
 

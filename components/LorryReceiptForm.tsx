@@ -77,7 +77,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
         return {
             ...emptyFormData,
             lrNumber: nextLrNumber,
-            goods: [{ id: Date.now().toString(), productName: '', packagingType: '', packages: 0, actualWeight: 0, chargeWeight: 0 }]
+            goods: [{ id: Date.now().toString(), productName: '', packagingType: '', hsnCode: '', packages: 0, actualWeight: 0, chargeWeight: 0 }]
         };
     });
     
@@ -159,7 +159,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
             ...prev,
             goods: [...prev.goods, {
                 id: Date.now().toString(),
-                productName: '', packagingType: '',
+                productName: '', packagingType: '', hsnCode: '',
                 packages: 0, actualWeight: 0, chargeWeight: 0,
             }]
         }));
@@ -321,8 +321,13 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
                     <legend className="px-2 font-semibold text-gray-700">Goods Details</legend>
                     <div className="space-y-3">
                         {formData.goods.map((item, index) => (
-                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-10 gap-2 border-b pb-3 items-start">
-                                <div className="md:col-span-4">
+                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 border-b pb-3 items-start">
+                                <div className="md:col-span-2">
+                                    <FormField label="HSN Code">
+                                        <TextInput placeholder="HSN Code" value={item.hsnCode} onChange={e => handleGoodsChange(index, 'hsnCode', e.target.value)} />
+                                    </FormField>
+                                </div>
+                                <div className="md:col-span-3">
                                      <FormField label="Description of Goods">
                                         <TextInput placeholder="Product Name" value={item.productName} onChange={e => handleGoodsChange(index, 'productName', e.target.value)} />
                                     </FormField>
@@ -331,7 +336,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
                                 <div className="md:col-span-2"><FormField label="Method of Packing"><TextInput placeholder="e.g. Box, Bag" value={item.packagingType} onChange={e => handleGoodsChange(index, 'packagingType', e.target.value)} /></FormField></div>
                                 <div className="md:col-span-1"><FormField label="Number of Packages"><TextInput placeholder="0" type="number" value={item.packages || ''} onChange={e => handleGoodsChange(index, 'packages', parseInt(e.target.value) || 0)} /></FormField></div>
                                 <div className="md:col-span-1"><FormField label="Actual Weight"><TextInput placeholder="0.00" type="number" value={item.actualWeight || ''} onChange={e => handleGoodsChange(index, 'actualWeight', parseInt(e.target.value) || 0)} /></FormField></div>
-                                <div className="md:col-span-2 flex items-end">
+                                <div className="md:col-span-3 flex items-end">
                                     <FormField label="Charged Weight">
                                         <div className="flex items-center">
                                             <TextInput placeholder="0.00" type="number" value={item.chargeWeight || ''} onChange={e => handleGoodsChange(index, 'chargeWeight', parseInt(e.target.value) || 0)} />
