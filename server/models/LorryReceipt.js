@@ -13,7 +13,7 @@ const LorryReceiptSchema = new Schema({
   origin_location: { type: String, required: true },
   destination_location: { type: String, required: true },
   freight_type: { type: String, enum: ['Paid', 'Due'], required: true },
-  freight_amount: { type: Number, required: true },
+  freight_amount: { type: Number, required: false },
   hide_freight_in_pdf: { type: Boolean, default: false },
   booking_time: { type: Date, default: Date.now },
 

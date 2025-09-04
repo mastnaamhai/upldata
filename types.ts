@@ -113,7 +113,7 @@ export interface LorryReceipt {
   origin_location: string;
   destination_location: string;
   freight_type: 'Paid' | 'Due';
-  freight_amount: number;
+  freight_amount?: number;
   hide_freight_in_pdf: boolean;
   booking_time: string; // ISO 8601 Date string
 

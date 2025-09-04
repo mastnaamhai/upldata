@@ -92,8 +92,8 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, l
                                 <option value="Paid">Paid</option>
                             </DropdownInput>
                         </FormField>
-                        <FormField label="Freight Amount (₹)">
-                            <TextInput type="number" name="freight_amount" value={formData.freight_amount || ''} onChange={handleNumericChange} required />
+                        <FormField label="Freight Amount (₹) (Optional)">
+                            <TextInput type="number" name="freight_amount" value={formData.freight_amount || ''} onChange={handleNumericChange} />
                         </FormField>
                     </FormRow>
                     <div className="flex items-center space-x-2 mt-4">
