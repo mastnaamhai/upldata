@@ -56,9 +56,23 @@ export const deleteInvoice = async (invoiceId: string): Promise<{ updatedLrs: Lo
 };
 
 export const saveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
+    const lrToSend = JSON.parse(JSON.stringify(lr));
+
+    // When adding a new sub-document (a good) to an existing LR, the frontend creates a temporary
+    // ID (a timestamp). Real Mongo ObjectIDs are 24-character hex strings.
+    // We need to remove any temporary IDs before sending to the backend, so Mongoose can
+    // generate a proper _id, without affecting existing goods that have valid IDs.
+    if (lrToSend.goods) {
+        lrToSend.goods.forEach((item: any) => {
+            if (item.id && item.id.length !== 24) {
+                delete item.id;
+            }
+        });
+    }
+
     return apiFetch<LorryReceipt>('/lrs', {
         method: 'POST',
-        body: JSON.stringify(lr),
+        body: JSON.stringify(lrToSend),
     });
 };
 

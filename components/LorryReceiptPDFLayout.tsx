@@ -105,6 +105,7 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                         <thead>
                             <tr className="border border-black">
                                 <th className="p-1 border border-black">Sr no.</th>
+                                <th className="p-1 border border-black">HSN</th>
                                 <th className="p-1 border border-black">Description of Goods</th>
                                 <th className="p-1 border border-black">Method of Packing</th>
                                 <th className="p-1 border border-black">Number of Packages</th>
@@ -116,6 +117,7 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                             {lr.goods.map((item, index) => (
                                     <tr key={item.id}>
                                     <td className="p-1 border border-black text-center">{index + 1}</td>
+                                    <td className="p-1 border border-black">{item.hsnCode}</td>
                                     <td className="p-1 border border-black">{item.productName}</td>
                                     <td className="p-1 border border-black">{item.packagingType}</td>
                                     <td className="p-1 border border-black text-right">{item.packages}</td>
@@ -124,12 +126,12 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                                 </tr>
                             ))}
                             {Array.from({ length: 10 - lr.goods.length }).map((_, i) => (
-                                <tr key={`empty-${i}`}><td className="p-1 border border-black h-6" colSpan={6}></td></tr>
+                                <tr key={`empty-${i}`}><td className="p-1 border border-black h-6" colSpan={7}></td></tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr className="font-bold">
-                                <td className="p-1 border border-black" colSpan={3}>Total:</td>
+                                <td className="p-1 border border-black" colSpan={4}>Total:</td>
                                 <td className="p-1 border border-black text-right">{goodsTotalPackages}</td>
                                 <td className="p-1 border border-black text-right">{goodsTotalActualWeight.toFixed(2)}</td>
                                 <td className="p-1 border border-black text-right">{goodsTotalChargeWeight.toFixed(2)}</td>

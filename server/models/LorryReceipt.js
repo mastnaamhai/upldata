@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const GoodsItemSchema = new Schema({
   productName: String,
   packagingType: String,
+  hsnCode: String,
   packages: Number,
   actualWeight: Number,
   chargeWeight: Number,
