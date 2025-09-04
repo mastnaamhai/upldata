@@ -82,11 +82,9 @@ export interface GoodsItem {
   id: string;
   productName: string;
   packagingType: string;
-  hsnCode: string;
   packages: number;
   actualWeight: number;
   chargeWeight: number;
-  freightRate: number;
 }
 
 export interface FreightDetails {
@@ -133,6 +131,10 @@ export interface LorryReceipt {
   loadingAddress?: string;
   deliveryAddress?: string;
   includeFreightDetails: boolean;
+  eWayBillNumber?: string;
+  sealNumber?: string;
+  isInsured?: boolean;
+  insuranceDetails?: string;
 }
 
 export type LorryReceiptCopyType = 'Consigner' | 'Consignee' | 'Driver' | 'Office';
@@ -141,7 +143,7 @@ export interface Client {
   id: string;
   name: string;
   contactPerson: string;
-  phone: string;
+  phone?: string;
   email: string;
   gstin: string;
   address: string;
