@@ -61,8 +61,8 @@ interface LorryReceiptViewProps {
     selectedFy: string;
     clients: Client[];
     lrs: LorryReceipt[];
-    onAddClient: (clientData: Client) => Promise<Client>;
-    onSave: (lr: LorryReceipt) => void;
+    onAddClient: (clientData: Omit<Client, 'id'>) => Promise<Client>;
+    onSave: (lr: LorryReceipt) => Promise<LorryReceipt>;
     onDelete: (lrId: string) => void;
 }
 
@@ -111,15 +111,16 @@ const LorryReceiptView: React.FC<LorryReceiptViewProps> = ({ selectedFy, clients
         setLrToCopiesView(null);
     };
     
-    const handleSaveLR = (lrData: LorryReceipt) => {
-        onSave(lrData);
-        const savedLR = 'id' in lrData && lrData.id 
-            ? lrData
-            : { ...lrData, id: Date.now().toString(), status: 'Un-Billed' as const };
-            
-        setShowForm(false);
-        setLrToEdit(null);
-        setLrToCopiesView(savedLR);
+    const handleSaveLR = async (lrData: LorryReceipt) => {
+        try {
+            const savedLr = await onSave(lrData);
+            setShowForm(false);
+            setLrToEdit(null);
+            setLrToCopiesView(savedLr);
+        } catch (error) {
+            console.error("Failed to save Lorry Receipt:", error);
+            alert(`Error: Could not save Lorry Receipt. Please check the console for details.`);
+        }
     };
     
     const handleCancelForm = () => {

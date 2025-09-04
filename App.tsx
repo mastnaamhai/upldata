@@ -142,7 +142,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleSaveLR = async (lr: LorryReceipt) => {
+  const handleSaveLR = async (lr: LorryReceipt): Promise<LorryReceipt> => {
       const savedLr = await api.saveLR(lr);
       setAppData(prev => {
           const exists = prev.lrs.some(l => l.id === savedLr.id);
@@ -151,6 +151,7 @@ const App: React.FC = () => {
             : [savedLr, ...prev.lrs]
           return { ...prev, lrs: updatedLRs };
       });
+      return savedLr;
   };
 
   const handleDeleteLR = async (lrId: string) => {
