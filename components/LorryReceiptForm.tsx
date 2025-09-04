@@ -43,6 +43,10 @@ const emptyFormData: Omit<LorryReceipt, 'id' | 'status'> = {
     receiverComments: '',
     isPickupDeliverySameAsPartyAddress: true,
     includeFreightDetails: false,
+    eWayBillNumber: '',
+    sealNumber: '',
+    isInsured: false,
+    insuranceDetails: '',
 };
 
 const mockHsnDatabase: { [key: string]: string | string[] } = {
@@ -73,16 +77,13 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
         return {
             ...emptyFormData,
             lrNumber: nextLrNumber,
-            goods: [{ id: Date.now().toString(), productName: '', packagingType: '', hsnCode: '', packages: 0, actualWeight: 0, chargeWeight: 0, freightRate: 0 }]
+            goods: [{ id: Date.now().toString(), productName: '', packagingType: '', packages: 0, actualWeight: 0, chargeWeight: 0 }]
         };
     });
     
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     const [clientFieldToSet, setClientFieldToSet] = useState<'consignorId' | 'consigneeId' | null>(null);
-    const [formErrors, setFormErrors] = useState<{ driverName?: string; driverPhone?: string; hsn?: { [key: number]: string } }>({});
-    const [hsnResults, setHsnResults] = useState<{ [key: number]: string[] }>({});
-    const [isHsnLoading, setIsHsnLoading] = useState<{ [key: number]: boolean }>({});
-    const [isProductNameManual, setIsProductNameManual] = useState<{ [key: number]: boolean }>({ 0: true });
+    const [formErrors, setFormErrors] = useState<{ driverName?: string; driverPhone?: string; }>({});
 
     const selectedConsignor = useMemo(() => clients.find(c => c.id === formData.consignorId), [formData.consignorId, clients]);
     const selectedConsignee = useMemo(() => clients.find(c => c.id === formData.consigneeId), [formData.consigneeId, clients]);
@@ -158,11 +159,10 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
             ...prev,
             goods: [...prev.goods, {
                 id: Date.now().toString(),
-                productName: '', packagingType: '', hsnCode: '',
-                packages: 0, actualWeight: 0, chargeWeight: 0, freightRate: 0,
+                productName: '', packagingType: '',
+                packages: 0, actualWeight: 0, chargeWeight: 0,
             }]
         }));
-        setIsProductNameManual(prev => ({...prev, [formData.goods.length]: true }));
     };
     
     const removeGoodsItem = (index: number) => {
@@ -172,41 +172,6 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
         }));
     };
     
-    const handleHsnBlur = async (index: number) => {
-        const item = formData.goods[index];
-        if (!item.hsnCode || item.hsnCode.length !== 6) {
-            setFormErrors(prev => ({ ...prev, hsn: {...prev.hsn, [index]: 'HSN code must be 6 digits.' }}));
-            return;
-        }
-
-        const newHsnErrors = {...formErrors.hsn};
-        delete newHsnErrors[index];
-        setFormErrors(prev => ({ ...prev, hsn: newHsnErrors }));
-        
-        const newResults = {...hsnResults};
-        delete newResults[index];
-        setHsnResults(newResults);
-
-        setIsHsnLoading(prev => ({ ...prev, [index]: true }));
-        setIsProductNameManual(prev => ({...prev, [index]: false}));
-
-        const result = await fetchHsnData(item.hsnCode);
-        if (result) {
-            if (typeof result === 'string') {
-                handleGoodsChange(index, 'productName', result);
-                setIsProductNameManual(prev => ({...prev, [index]: true})); // Allow editing even if found
-            } else { // It's an array
-                setHsnResults(prev => ({ ...prev, [index]: result }));
-                handleGoodsChange(index, 'productName', '');
-            }
-        } else {
-            handleGoodsChange(index, 'productName', ''); 
-            setIsProductNameManual(prev => ({...prev, [index]: true}));
-        }
-        setIsHsnLoading(prev => ({ ...prev, [index]: false }));
-    };
-
-
     const totals = useMemo(() => {
         const { freightDetails } = formData;
         const subtotal = freightDetails.basicFreight + freightDetails.packingCharge + freightDetails.pickupCharge +
@@ -220,7 +185,7 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
     }, [formData.freightDetails]);
 
     const validateForm = (): boolean => {
-        const errors: { driverName?: string; driverPhone?: string; hsn?: { [key: number]: string } } = {};
+        const errors: { driverName?: string; driverPhone?: string; } = {};
         const nameRegex = /^[a-zA-Z\s]+$/;
         const phoneRegex = /^[6-9]\d{9}$/;
 
@@ -231,15 +196,8 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
             errors.driverPhone = 'Please enter a valid 10-digit Indian mobile number.';
         }
         
-        formData.goods.forEach((item, index) => {
-            if (!item.hsnCode || item.hsnCode.length !== 6) {
-                 if(!errors.hsn) errors.hsn = {};
-                 errors.hsn[index] = 'HSN code must be 6 digits.';
-            }
-        });
-
         setFormErrors(errors);
-        return Object.keys(errors).length === 0 && (!errors.hsn || Object.keys(errors.hsn).length === 0);
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = (e: FormEvent) => {
@@ -336,40 +294,45 @@ const LorryReceiptForm: React.FC<LorryReceiptFormProps> = ({ onSave, onCancel, c
                     </FormRow>
                 </fieldset>
 
+                <fieldset className="border p-4 rounded-md space-y-4">
+                    <legend className="px-2 font-semibold text-gray-700">E-Way Bill &amp; Insurance</legend>
+                    <FormRow>
+                        <FormField label="E-Way Bill Number">
+                            <TextInput name="eWayBillNumber" value={formData.eWayBillNumber || ''} onChange={handleChange} placeholder="E-Way Bill Number" />
+                        </FormField>
+                        <FormField label="Seal Number">
+                            <TextInput name="sealNumber" value={formData.sealNumber || ''} onChange={handleChange} placeholder="Seal Number" />
+                        </FormField>
+                    </FormRow>
+                    <div className="pt-2">
+                         <div className="flex items-center space-x-2 mb-2">
+                            <input type="checkbox" id="isInsured" name="isInsured" checked={formData.isInsured || false} onChange={(e) => setFormData(prev => ({ ...prev, isInsured: e.target.checked }))} />
+                            <label htmlFor="isInsured" className="text-sm font-medium">Is this shipment insured?</label>
+                        </div>
+                        {formData.isInsured && (
+                            <FormField label="Insurance Details">
+                                <TextAreaInput name="insuranceDetails" value={formData.insuranceDetails || ''} onChange={handleChange} rows={2} placeholder="Enter insurance company, policy number, etc." />
+                            </FormField>
+                        )}
+                    </div>
+                </fieldset>
+
                  <fieldset className="border p-4 rounded-md">
                     <legend className="px-2 font-semibold text-gray-700">Goods Details</legend>
                     <div className="space-y-3">
                         {formData.goods.map((item, index) => (
-                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 border-b pb-3 items-start">
-                                <div className="md:col-span-2">
-                                    <FormField label="HSN Code">
-                                    <TextInput placeholder="6-digit HSN" value={item.hsnCode} onChange={e => handleGoodsChange(index, 'hsnCode', e.target.value)} onBlur={() => handleHsnBlur(index)} maxLength={6} />
-                                    {isHsnLoading[index] && <p className="text-xs text-blue-500">Fetching...</p>}
-                                    {formErrors.hsn?.[index] && <p className="text-red-500 text-xs mt-1">{formErrors.hsn[index]}</p>}
-                                    </FormField>
-                                </div>
-                                
+                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-10 gap-2 border-b pb-3 items-start">
                                 <div className="md:col-span-4">
-                                     <FormField label="Product Name">
-                                    {hsnResults[index] && hsnResults[index].length > 1 ? (
-                                        <DropdownInput value={item.productName} onChange={e => handleGoodsChange(index, 'productName', e.target.value)} >
-                                            <option value="">Select Product</option>
-                                            {hsnResults[index].map(product => <option key={product} value={product}>{product}</option>)}
-                                        </DropdownInput>
-                                    ) : (
-                                        <TextInput placeholder="Product Name" value={item.productName} onChange={e => handleGoodsChange(index, 'productName', e.target.value)} readOnly={!isProductNameManual[index]} className={!isProductNameManual[index] ? 'bg-gray-200 cursor-not-allowed' : ''} />
-                                    )}
-                                    {isProductNameManual[index] && !hsnResults[index] && !isHsnLoading[index] && item.hsnCode?.length === 6 && (
-                                        <p className="text-xs text-gray-500">HSN not found. Please enter manually.</p>
-                                    )}
+                                     <FormField label="Description of Goods">
+                                        <TextInput placeholder="Product Name" value={item.productName} onChange={e => handleGoodsChange(index, 'productName', e.target.value)} />
                                     </FormField>
                                 </div>
 
-                                <div className="md:col-span-2"><FormField label="Packaging"><TextInput placeholder="e.g. Box, Bag" value={item.packagingType} onChange={e => handleGoodsChange(index, 'packagingType', e.target.value)} /></FormField></div>
-                                <div className="md:col-span-1"><FormField label="Packages"><TextInput placeholder="0" type="number" value={item.packages || ''} onChange={e => handleGoodsChange(index, 'packages', parseInt(e.target.value) || 0)} /></FormField></div>
-                                <div className="md:col-span-1"><FormField label="Actual Wt."><TextInput placeholder="0.00" type="number" value={item.actualWeight || ''} onChange={e => handleGoodsChange(index, 'actualWeight', parseInt(e.target.value) || 0)} /></FormField></div>
+                                <div className="md:col-span-2"><FormField label="Method of Packing"><TextInput placeholder="e.g. Box, Bag" value={item.packagingType} onChange={e => handleGoodsChange(index, 'packagingType', e.target.value)} /></FormField></div>
+                                <div className="md:col-span-1"><FormField label="Number of Packages"><TextInput placeholder="0" type="number" value={item.packages || ''} onChange={e => handleGoodsChange(index, 'packages', parseInt(e.target.value) || 0)} /></FormField></div>
+                                <div className="md:col-span-1"><FormField label="Actual Weight"><TextInput placeholder="0.00" type="number" value={item.actualWeight || ''} onChange={e => handleGoodsChange(index, 'actualWeight', parseInt(e.target.value) || 0)} /></FormField></div>
                                 <div className="md:col-span-2 flex items-end">
-                                    <FormField label="Charge Wt.">
+                                    <FormField label="Charged Weight">
                                         <div className="flex items-center">
                                             <TextInput placeholder="0.00" type="number" value={item.chargeWeight || ''} onChange={e => handleGoodsChange(index, 'chargeWeight', parseInt(e.target.value) || 0)} />
                                             <button type="button" onClick={() => removeGoodsItem(index)} className="ml-2 text-red-500 hover:text-red-700 p-2">&times;</button>
