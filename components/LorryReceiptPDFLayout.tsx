@@ -63,11 +63,23 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                         <p><span className="font-bold">Payment Status:</span> {lr.paymentStatus}</p>
                 </div>
             </div>
-            <div className="border-y border-black py-1">
-                <p><span className="font-bold">Vehicle Number:</span> {lr.vehicleNumber}</p>
-                <p><span className="font-bold">Driver Details:</span> {lr.driverName} - {lr.driverPhone}</p>
+            <div className="border-y border-black py-1 grid grid-cols-2">
+                <div>
+                    <p><span className="font-bold">Vehicle Number:</span> {lr.vehicleNumber}</p>
+                    <p><span className="font-bold">Driver Details:</span> {lr.driverName} - {lr.driverPhone}</p>
+                </div>
+                <div>
+                    <p><span className="font-bold">E-Way Bill No:</span> {lr.eWayBillNumber}</p>
+                    <p><span className="font-bold">Seal No:</span> {lr.sealNumber}</p>
+                </div>
             </div>
-                <p className="text-center text-sm font-semibold border-b border-black py-1">Insurance details is not available or not insured.</p>
+                <div className="text-center text-sm font-semibold border-b border-black py-1">
+                    {lr.isInsured ? (
+                        <p><span className="font-bold">Insurance Details:</span> {lr.insuranceDetails}</p>
+                    ) : (
+                        <p>Insurance details is not available or not insured.</p>
+                    )}
+                </div>
 
 
             <div className="grid grid-cols-2 gap-4 border-b border-black py-2">
@@ -94,10 +106,11 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                             <tr className="border border-black">
                                 <th className="p-1 border border-black">Sr no.</th>
                                 <th className="p-1 border border-black">HSN</th>
-                                <th className="p-1 border border-black">Product / Material</th>
-                                <th className="p-1 border border-black">Packages</th>
+                                <th className="p-1 border border-black">Description of Goods</th>
+                                <th className="p-1 border border-black">Method of Packing</th>
+                                <th className="p-1 border border-black">Number of Packages</th>
                                 <th className="p-1 border border-black">Actual Weight</th>
-                                <th className="p-1 border border-black">Charge Weight</th>
+                                <th className="p-1 border border-black">Charged Weight</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,21 +119,22 @@ const LorryReceiptPDFLayout: React.FC<LorryReceiptPDFLayoutProps> = ({ lr, clien
                                     <td className="p-1 border border-black text-center">{index + 1}</td>
                                     <td className="p-1 border border-black">{item.hsnCode}</td>
                                     <td className="p-1 border border-black">{item.productName}</td>
+                                    <td className="p-1 border border-black">{item.packagingType}</td>
                                     <td className="p-1 border border-black text-right">{item.packages}</td>
-                                    <td className="p-1 border border-black text-right">{item.actualWeight.toFixed(3)} MTS</td>
-                                    <td className="p-1 border border-black text-right">{item.chargeWeight.toFixed(3)} MTS</td>
+                                    <td className="p-1 border border-black text-right">{item.actualWeight.toFixed(2)}</td>
+                                    <td className="p-1 border border-black text-right">{item.chargeWeight.toFixed(2)}</td>
                                 </tr>
                             ))}
                             {Array.from({ length: 10 - lr.goods.length }).map((_, i) => (
-                                <tr key={`empty-${i}`}><td className="p-1 border border-black h-6" colSpan={6}></td></tr>
+                                <tr key={`empty-${i}`}><td className="p-1 border border-black h-6" colSpan={7}></td></tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr className="font-bold">
-                                <td className="p-1 border border-black" colSpan={3}>Total:</td>
+                                <td className="p-1 border border-black" colSpan={4}>Total:</td>
                                 <td className="p-1 border border-black text-right">{goodsTotalPackages}</td>
-                                <td className="p-1 border border-black text-right">{goodsTotalActualWeight.toFixed(3)} MTS</td>
-                                <td className="p-1 border border-black text-right">{goodsTotalChargeWeight.toFixed(3)} MTS</td>
+                                <td className="p-1 border border-black text-right">{goodsTotalActualWeight.toFixed(2)}</td>
+                                <td className="p-1 border border-black text-right">{goodsTotalChargeWeight.toFixed(2)}</td>
                             </tr>
                         </tfoot>
                     </table>

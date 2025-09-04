@@ -8,7 +8,6 @@ const GoodsItemSchema = new Schema({
   packages: Number,
   actualWeight: Number,
   chargeWeight: Number,
-  freightRate: Number,
 }, { _id: true });
 
 
@@ -54,6 +53,10 @@ const LorryReceiptSchema = new Schema({
   isPickupDeliverySameAsPartyAddress: Boolean,
   loadingAddress: String,
   deliveryAddress: String,
+  eWayBillNumber: String,
+  sealNumber: String,
+  isInsured: Boolean,
+  insuranceDetails: String,
 });
 
 module.exports = mongoose.model('LorryReceipt', LorryReceiptSchema);
